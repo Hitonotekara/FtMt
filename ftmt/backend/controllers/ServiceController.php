@@ -5,6 +5,7 @@ namespace backend\controllers;
 use Yii;
 use common\models\Service;
 use common\models\ServiceSearch;
+use yii\db\Transaction;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -109,9 +110,33 @@ class ServiceController extends Controller
     {
         $model = $this->findModel($id);
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($model->load(Yii::$app->request->post())) {
+
+            $transaction = Service::getDb()->beginTransaction();
+            try {
+
+                if (!$model->save()) {
+                    throw \Exception('Не удалось сохранить данные.');
+                }
+
+
+
+
+                $transaction->commit();
+
+                return $this->redirect(['view', 'id' => $model->id]);
+
+            } catch(\Exception $e) {
+
+                $transaction->rollBack();
+                throw $e;
+            }
+
         }
+
+        /*if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            return $this->redirect(['view', 'id' => $model->id]);
+        }*/
 
         return $this->render('update', [
             'model' => $model,
