@@ -10,6 +10,7 @@ use yii\grid\GridView;
 $this->title = 'Services';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
+
 <div class="service-index">
 
     <h1><?= Html::encode($this->title) ?></h1>
@@ -33,7 +34,10 @@ $this->params['breadcrumbs'][] = $this->title;
             'description',
             'status',
             'expired',
-            'city_id',
+            [
+                'label' => 'City',
+                'attribute' => 'city.name',
+            ],
             ['class' => 'custom\grid\ActionColumn'],
         ],
     ]); ?>
