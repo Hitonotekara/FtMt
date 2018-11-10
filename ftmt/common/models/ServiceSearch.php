@@ -42,7 +42,7 @@ class ServiceSearch extends Service
      */
     public function search($params)
     {
-        $query = Service::find();
+        $query = Service::find()->with('city');
 
         // add conditions that should always apply here
 

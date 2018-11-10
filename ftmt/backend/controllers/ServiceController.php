@@ -56,12 +56,10 @@ class ServiceController extends Controller
      */
     public function actionIndex()
     {
-        $model = Service::find()->with('city')->all();
         $searchModel = new ServiceSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
-            'model' => $model,
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
         ]);
