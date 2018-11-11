@@ -19,9 +19,18 @@ class ServiceSearch extends Service
     {
         return [
             [['id', 'status', 'city_id'], 'integer'],
-            [['name', 'code', 'description', 'expired'], 'safe'],
+            [['name', 'code', 'description', 'expired', 'city.name'], 'safe'],
             [['price'], 'number'],
         ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributes()
+    {
+        // подключаем поиск по полю city.name (делаем поле city.name доступным для поиска в gridview)
+        return array_merge(parent::attributes(), ['city.name']);
     }
 
     /**
@@ -42,7 +51,11 @@ class ServiceSearch extends Service
      */
     public function search($params)
     {
-        $query = Service::find()->with('city');
+        $query = Service::find()
+            // задаем алиас `serv` для таблицы основной сущности (Service)
+            ->from(['serv' => Service::tableName()])
+            // подключаем джойн с таблицей связанной сущности (City) и задаем ей алиас `city`
+            ->joinWith('city city');
 
         // add conditions that should always apply here
 
@@ -53,6 +66,12 @@ class ServiceSearch extends Service
             ],
         ]);
 
+        // подключаем сортировку по полю city.name
+        $dataProvider->sort->attributes['city.name'] = [
+            'asc' => ['city.name' => SORT_ASC],
+            'desc' => ['city.name' => SORT_DESC],
+        ];
+
         $this->load($params);
 
         if (!$this->validate()) {
@@ -62,17 +81,19 @@ class ServiceSearch extends Service
         }
 
         // grid filtering conditions
+        // в названиях полей используем алиасы таблиц
         $query->andFilterWhere([
-            'id' => $this->id,
-            'price' => $this->price,
-            'status' => $this->status,
-            'expired' => $this->expired,
-            'city_id' => $this->city_id,
+            'serv.id' => $this->id,
+            'serv.price' => $this->price,
+            'serv.status' => $this->status,
+            'serv.expired' => $this->expired,
+            'serv.city_id' => $this->city_id,
         ]);
-
-        $query->andFilterWhere(['like', 'name', $this->name])
-            ->andFilterWhere(['like', 'code', $this->code])
-            ->andFilterWhere(['like', 'description', $this->description]);
+        $query->andFilterWhere(['like', 'serv.name', $this->name])
+            ->andFilterWhere(['like', 'serv.code', $this->code])
+            ->andFilterWhere(['like', 'serv.description', $this->description])
+            // подключаем поиск по полю city.name
+            ->andFilterWhere(['LIKE', 'city.name', $this->getAttribute('city.name')]);
 
         return $dataProvider;
     }
